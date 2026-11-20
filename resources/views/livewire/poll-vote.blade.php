@@ -1,31 +1,30 @@
 <div wire:poll.5s="refreshResults"
      x-data="{
         showShareModal: false,
-        qrGenerated: false,
+        qrDataUrl: '',
         initQr() {
-            if (this.qrGenerated) return;
-            this.$nextTick(() => {
-                const canvas = document.getElementById('poll-qr-canvas');
-                if (canvas && window.QRCode) {
-                    window.QRCode.toCanvas(canvas, window.location.href, {
-                        width: 200,
-                        margin: 2,
-                        color: {
-                            dark: '#4f46e5',
-                            light: '#ffffff'
-                        }
-                    }, (err) => {
-                        if (!err) this.qrGenerated = true;
-                    });
-                }
-            });
+            if (this.qrDataUrl) return;
+            const url = window.location.href;
+            if (window.QRCode) {
+                window.QRCode.toDataURL(url, {
+                    width: 240,
+                    margin: 2,
+                    color: {
+                        dark: '#4f46e5',
+                        light: '#ffffff'
+                    }
+                }, (err, dataUrl) => {
+                    if (!err && dataUrl) {
+                        this.qrDataUrl = dataUrl;
+                    }
+                });
+            }
         },
         downloadQr() {
-            const canvas = document.getElementById('poll-qr-canvas');
-            if (!canvas) return;
+            if (!this.qrDataUrl) return;
             const a = document.createElement('a');
             a.download = 'votesnap-poll-{{ $poll->slug }}.png';
-            a.href = canvas.toDataURL('image/png');
+            a.href = this.qrDataUrl;
             a.click();
         },
         copyLink() {
@@ -533,8 +532,16 @@
                     </button>
                 </div>
 
-                <div class="flex justify-center p-4 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                    <canvas id="poll-qr-canvas" class="rounded-xl"></canvas>
+                <div class="flex justify-center p-4 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner min-h-[200px] items-center">
+                    <template x-if="qrDataUrl">
+                        <img :src="qrDataUrl" alt="QR Code" class="w-48 h-48 rounded-xl shadow-sm" />
+                    </template>
+                    <template x-if="!qrDataUrl">
+                        <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <x-icon name="refresh" class="w-4 h-4 animate-spin" />
+                            <span>{{ __('جارٍ توليد الرمز...') }}</span>
+                        </div>
+                    </template>
                 </div>
             </div>
 

@@ -5,16 +5,12 @@ namespace App\Livewire;
 use App\Models\Poll;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class CreatePoll extends Component
 {
-    use WithFileUploads;
-
     public string $title = '';
     public string $question = '';
     public string $description = '';
-    public $image = null;
 
     /** @var array<int, string> */
     public array $options = ['', ''];
@@ -37,7 +33,6 @@ class CreatePoll extends Component
             'title' => ['required', 'string', 'min:3', 'max:255'],
             'question' => ['required', 'string', 'min:3', 'max:1000'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'image' => ['nullable', 'image', 'max:3072'], // 3MB max
             'options' => ['required', 'array', 'min:2', 'max:20'],
             'options.*' => ['required', 'string', 'min:1', 'max:255'],
             'poll_type' => ['required', 'in:single,multiple'],
@@ -78,18 +73,13 @@ class CreatePoll extends Component
     {
         $this->validate();
 
-        $imagePath = null;
-        if ($this->image) {
-            $imagePath = $this->image->store('polls', 'public');
-        }
-
-        $poll = DB::transaction(function () use ($imagePath) {
+        $poll = DB::transaction(function () {
             $poll = Poll::create([
                 'user_id' => auth()->id(),
                 'title' => $this->title,
                 'question' => $this->question,
                 'description' => ! empty($this->description) ? $this->description : null,
-                'image_path' => $imagePath,
+                'image_path' => null,
                 'poll_type' => $this->poll_type,
                 'max_choices' => $this->poll_type === 'multiple' ? ($this->max_choices ?? 2) : 1,
                 'start_at' => ! empty($this->start_at) ? $this->start_at : null,

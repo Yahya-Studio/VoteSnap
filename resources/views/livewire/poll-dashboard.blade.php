@@ -1,29 +1,5 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
      x-data="{
-        qrCanvasGenerated: false,
-        initShareQr(url) {
-            this.qrCanvasGenerated = false;
-            this.$nextTick(() => {
-                const canvas = document.getElementById('dashboard-qr-canvas');
-                if (canvas && window.QRCode) {
-                    window.QRCode.toCanvas(canvas, url, {
-                        width: 180,
-                        margin: 2,
-                        color: { dark: '#4f46e5', light: '#ffffff' }
-                    }, (err) => {
-                        if (!err) this.qrCanvasGenerated = true;
-                    });
-                }
-            });
-        },
-        downloadQr() {
-            const canvas = document.getElementById('dashboard-qr-canvas');
-            if (!canvas) return;
-            const a = document.createElement('a');
-            a.download = 'votesnap-qr.png';
-            a.href = canvas.toDataURL('image/png');
-            a.click();
-        },
         copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 $dispatch('toast', {
@@ -230,7 +206,6 @@
                         <!-- Share Button -->
                         <button type="button"
                                 wire:click="openShareModal({{ $poll->id }})"
-                                @click="initShareQr('{{ route('polls.show', $poll) }}')"
                                 class="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 flex items-center gap-1.5 transition-colors"
                                 title="{{ __('مشاركة التصويت') }}">
                             <x-icon name="share" class="w-4 h-4" />
@@ -287,9 +262,31 @@
 
     <!-- ================= SHARE MODAL ================= -->
     @if ($sharePoll)
+        @php $shareUrl = route('polls.show', $sharePoll); @endphp
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
              x-transition:enter="transition ease-out duration-200">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 sm:p-8 space-y-6">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 sm:p-8 space-y-6"
+                 x-data="{
+                    qrDataUrl: '',
+                    init() {
+                        if (window.QRCode) {
+                            window.QRCode.toDataURL(@js($shareUrl), {
+                                width: 240,
+                                margin: 2,
+                                color: { dark: '#4f46e5', light: '#ffffff' }
+                            }, (err, dataUrl) => {
+                                if (!err && dataUrl) this.qrDataUrl = dataUrl;
+                            });
+                        }
+                    },
+                    downloadQr() {
+                        if (!this.qrDataUrl) return;
+                        const a = document.createElement('a');
+                        a.download = 'votesnap-poll-{{ $sharePoll->slug }}.png';
+                        a.href = this.qrDataUrl;
+                        a.click();
+                    }
+                 }">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
@@ -305,7 +302,6 @@
                 </div>
 
                 <!-- URL Field -->
-                @php $shareUrl = route('polls.show', $sharePoll); @endphp
                 <div class="space-y-2">
                     <label class="text-xs font-semibold text-slate-500">{{ __('الرابط المباشر') }}</label>
                     <div class="flex items-center gap-2">
@@ -349,12 +345,21 @@
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     <div class="flex items-center justify-between">
                         <label class="text-xs font-semibold text-slate-500">{{ __('رمز الاستجابة السريعة (QR)') }}</label>
-                        <button type="button" @click="downloadQr()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                            {{ __('تحميل الصورة') }}
+                        <button type="button" @click="downloadQr()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                            <x-icon name="qr-code" class="w-3.5 h-3.5" />
+                            <span>{{ __('تحميل الصورة') }}</span>
                         </button>
                     </div>
-                    <div class="flex justify-center p-4 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <canvas id="dashboard-qr-canvas" class="rounded-xl"></canvas>
+                    <div class="flex justify-center p-4 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[200px] items-center">
+                        <template x-if="qrDataUrl">
+                            <img :src="qrDataUrl" alt="QR Code" class="w-48 h-48 rounded-xl shadow-sm" />
+                        </template>
+                        <template x-if="!qrDataUrl">
+                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                <x-icon name="refresh" class="w-4 h-4 animate-spin" />
+                                <span>{{ __('جارٍ توليد الرمز...') }}</span>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

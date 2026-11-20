@@ -28,6 +28,14 @@
             [x-cloak] { display: none !important; }
         </style>
 
+        <script>
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        </script>
+
         <!-- Scripts & Styles -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
@@ -54,14 +62,30 @@
         <div x-data="{
                 toasts: [],
                 add(toast) {
+                    if (Array.isArray(toast)) {
+                        toast = toast[0] || {};
+                    }
+                    if (typeof toast === 'string') {
+                        toast = { message: toast, type: 'info' };
+                    }
+                    if (!toast || !toast.message) return;
+
                     toast.id = Date.now() + Math.random();
                     this.toasts.push(toast);
-                    setTimeout(() => this.remove(toast.id), toast.duration || 4000);
+                    setTimeout(() => this.remove(toast.id), toast.duration || 4500);
                 },
                 remove(id) {
                     this.toasts = this.toasts.filter(t => t.id !== id);
                 }
              }"
+             x-init="
+                @if (session('status'))
+                    add({ message: @js(session('status')), type: 'success' });
+                @endif
+                @if (session('error'))
+                    add({ message: @js(session('error')), type: 'error' });
+                @endif
+             "
              x-on:toast.window="add($event.detail)"
              class="fixed bottom-5 end-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none p-4">
             <template x-for="toast in toasts" :key="toast.id">

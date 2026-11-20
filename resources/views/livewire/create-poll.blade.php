@@ -62,21 +62,6 @@
                                   class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"></textarea>
                         @error('description') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
-
-                    <!-- Image Upload -->
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                            {{ __('صورة التصويت (اختياري)') }}
-                        </label>
-                        <input type="file"
-                               wire:model="image"
-                               accept="image/*"
-                               class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-950/60 dark:file:text-indigo-400 hover:file:bg-indigo-100" />
-                        <div wire:loading wire:target="image" class="text-xs text-indigo-500 mt-1">
-                            {{ __('جارٍ رفع الصورة المعاينة...') }}
-                        </div>
-                        @error('image') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
-                    </div>
                 </div>
 
                 <!-- Answer Options Card -->
@@ -310,12 +295,6 @@
                         <p class="text-xs text-slate-400 line-clamp-3">
                             {{ $description }}
                         </p>
-                    @endif
-
-                    @if ($image)
-                        <div class="rounded-xl overflow-hidden max-h-48 border border-slate-200 dark:border-slate-800">
-                            <img src="{{ $image->temporaryUrl() }}" alt="Preview" class="w-full h-full object-cover" />
-                        </div>
                     @endif
 
                     <!-- Preview Options -->
